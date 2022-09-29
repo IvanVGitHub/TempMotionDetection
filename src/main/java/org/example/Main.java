@@ -1,7 +1,6 @@
 package org.example;
 
 //import com.bedivierre.watcher.facerec.compreface.CompreFaceResult;
-import com.google.gson.Gson;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -10,31 +9,24 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacv.*;
+import org.bytedeco.javacv.Frame;
 import org.bytedeco.opencv.opencv_core.*;
 import org.example.db.ConnectDB;
-import org.example.functional.NewEvent;
+import org.example.db.QueryDB;
+import org.example.functional.EventMaker;
+import org.example.functional.EventNew;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.net.URL;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.imencode;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 public class Main implements Runnable{
-
+    private static Frame frm;
     public class CamData {
         public String host;
         public String path;
@@ -79,6 +71,19 @@ public class Main implements Runnable{
 
     final int INTERVAL = 40;///you may use interval
     final int COMPREFACE_INTERVAL = 500;///you may use interval
+    public boolean boolWorkEventMaker = false;
+    private static long eventTimeCreate;
+    public static long getEventTimeCreate() {
+        eventTimeCreate = System.currentTimeMillis();
+        return eventTimeCreate;
+    }
+    public void setEventTimeCreate(long eventTimeCreate) {
+        this.eventTimeCreate = eventTimeCreate;
+    }
+    public static Frame getFrm() {
+        return frm;
+    }
+
     CanvasFrame canvas;
 
     public Main() {
@@ -88,11 +93,23 @@ public class Main implements Runnable{
 
     public static void main(String[] args) throws Exception {
         try {
+            ConnectDB.init();
+            SystemTray systemTray = SystemTray.getSystemTray();
+            URL url = ClassLoader.getSystemResource("img/logoSmall.png");
+            TrayIcon trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url));
+            trayIcon.setImageAutoSize(true);
+            try {
+                systemTray.add(trayIcon);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            QueryDB.testDB(trayIcon);
+
+
+
             Main gs = new Main();
             Thread th = new Thread(gs);
             th.start();
-
-            ConnectDB.init();
         }
         catch (Exception e){
             System.err.println("Error: " + e.getMessage());
@@ -109,7 +126,7 @@ public class Main implements Runnable{
             CamData c4 = new CamData(address3, "/Streaming/Channels/101", user, pwd1);
             CamData c5 = new CamData("172.20.7.2", "/axis-media/media.amp", user, pwd1);
 
-            CamData current = c2;
+            CamData current = c1;
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(current.getConnectionUrl());
             streamGrabber.setFrameRate(current.framerate);
             streamGrabber.setImageWidth(current.width);
@@ -139,7 +156,6 @@ public class Main implements Runnable{
 
             long timer = System.currentTimeMillis();
 
-            Frame frm;
             Mat frame = new Mat();
             Mat firstFrame = new Mat();
             Mat gray = new Mat();
@@ -206,19 +222,24 @@ public class Main implements Runnable{
                 if(cnts.size() > 0){
                     //евент "замечено движение"
                     for(int i=0; i < cnts.size(); i++) {
-                        if(contourArea(cnts.get(i)) < 700) {
+                        if(contourArea(cnts.get(i)) < 2500) {
                             continue;
                         }
                         Rect r = boundingRect(cnts.get(i));
                         rectangle(frame, r, new Scalar(0, 255, 0, 2));
+
+
+
+
+                        if (boolWorkEventMaker) {
+                            //указываем время создания события
+                            setEventTimeCreate(System.currentTimeMillis());
+                            //запускаем механизм генерации файлов (10 фото с промежутком 0,5 с и видео 10 сек) события
+                            new EventMaker();
+                        }
                     }
                 }
-
                 canvas.showImage(converterToMat.convert(frame));
-
-
-
-                new NewEvent.createImg(frm);
             }
         } catch (FrameGrabber.Exception e) {
             e.printStackTrace();

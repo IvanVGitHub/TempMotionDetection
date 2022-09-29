@@ -1,6 +1,10 @@
 package org.example.db;
 
+import com.bedivierre.eloquent.QueryBuilder;
+
 import java.awt.*;
+import java.sql.Timestamp;
+import java.util.HashMap;
 
 public class QueryDB {
     public static void testDB(TrayIcon trayIcon) {
