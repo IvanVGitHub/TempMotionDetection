@@ -1,6 +1,7 @@
 package org.example.functional;
 
 import org.bytedeco.javacv.Java2DFrameConverter;
+import org.example.Main;
 import org.example.db.QueryMDevent;
 import sun.misc.BASE64Encoder;
 
@@ -40,13 +41,6 @@ public class EventNew {
             //преобразуем картинку
 
             QueryMDevent.addEventToDB(strImageBase64, sqlTimestamp);
-
-
-
-
-
-
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }

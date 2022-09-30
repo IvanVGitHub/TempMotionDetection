@@ -1,6 +1,7 @@
 package org.example;
 
 //import com.bedivierre.watcher.facerec.compreface.CompreFaceResult;
+import com.bedivierre.eloquent.QueryBuilder;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -13,17 +14,23 @@ import org.bytedeco.javacv.*;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.opencv.opencv_core.*;
 import org.example.db.ConnectDB;
+import org.example.db.ModelMDevent;
+import org.example.db.ModelMDeventImages;
 import org.example.db.QueryDB;
-import org.example.functional.EventMaker;
-import org.example.functional.EventNew;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.HashMap;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.imencode;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import static org.example.functional.EventNew.imageToBase64;
 
 public class Main implements Runnable{
     private static Frame frm;
@@ -33,10 +40,10 @@ public class Main implements Runnable{
         public String username;
         public String password;
         public int width, height, framerate;
-
         public String getConnectionUrl(){
             return "rtsp://" + username + ":"+password + "@" + host + path;
         }
+
         public CamData(String host, String path, String username, String password, int width, int height, int framerate){
             this.host = host;
             this.path = path;
@@ -56,11 +63,13 @@ public class Main implements Runnable{
             this(host, path, username, password, width, height, 25);
         }
     }
-
     static String address1 = "172.20.7.17";
+
     static String address2 = "172.20.7.36";
     static String address3 = "172.20.7.68";
     static String address4 = "172.20.13.10";
+    static String address5 = "172.20.7.2";
+    static String address6 = "172.20.7.71";
     static String user = "admin";
     static String user2 = "root";
     static String pwd1 = "asDtin38";
@@ -68,11 +77,16 @@ public class Main implements Runnable{
     static String compreFaceApiKeyLocal = "2e2916e6-1dea-4fec-bf78-fe725f678b89";
     static String compreFaceApiKey = "5e8198f5-d1e1-4ba0-be24-d8b8db15b001";
 
-
     final int INTERVAL = 40;///you may use interval
-    final int COMPREFACE_INTERVAL = 500;///you may use interval
-    public boolean boolWorkEventMaker = false;
+
+    final int COMPREFACE_INTERVAL = 200;///you may use interval
+    final int RECORD_TIMER_INTERVAL = 500;///you may use interval
+    final int RECORD_TIME = 5000;///you may use interval
+    public static boolean boolWorkEventMaker = true;
     private static long eventTimeCreate;
+
+    public static boolean isEventRecording = false;
+    public static ModelMDevent currentEvent = null;
     public static long getEventTimeCreate() {
         eventTimeCreate = System.currentTimeMillis();
         return eventTimeCreate;
@@ -83,11 +97,14 @@ public class Main implements Runnable{
     public static Frame getFrm() {
         return frm;
     }
+    public static void setFrm(Frame frm) {
+        Main.frm = frm;
+    }
 
     CanvasFrame canvas;
 
     public Main() {
-        canvas =  new CanvasFrame("Web Cam");
+        canvas = new CanvasFrame("Web Cam");
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
     }
 
@@ -124,9 +141,10 @@ public class Main implements Runnable{
             CamData c2 = new CamData(address1, "/Streaming/Channels/101", user, pwd1, 1280, 800);
             CamData c3 = new CamData(address2, "/Streaming/Channels/101", user, pwd1);
             CamData c4 = new CamData(address3, "/Streaming/Channels/101", user, pwd1);
-            CamData c5 = new CamData("172.20.7.2", "/axis-media/media.amp", user, pwd1);
+            CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
+            CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
 
-            CamData current = c1;
+            CamData current = c6;
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(current.getConnectionUrl());
             streamGrabber.setFrameRate(current.framerate);
             streamGrabber.setImageWidth(current.width);
@@ -155,6 +173,8 @@ public class Main implements Runnable{
             System.out.println("Camera connected.");
 
             long timer = System.currentTimeMillis();
+            long recordTimer = System.currentTimeMillis();
+            long lastEventStart = 0;
 
             Mat frame = new Mat();
             Mat firstFrame = new Mat();
@@ -164,6 +184,7 @@ public class Main implements Runnable{
             MatVector cnts = new MatVector();
 
             frm = streamGrabber.grabImage();
+            ///// ? 1.1/2
             frame = converterToMat.convert(frm);
             //convert to grayscale and set the first frame
             cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
@@ -197,9 +218,14 @@ public class Main implements Runnable{
 //
             System.out.println("Start cycle");
 
+
             while(true) {
                 frm = streamGrabber.grabImage();
+                isEventRecording = (lastEventStart + RECORD_TIME) > System.currentTimeMillis();
+                if(currentEvent != null && !isEventRecording)
+                    currentEvent = null;
 
+                ///// ? 1.2/2
                 frame = converterToMat.convert(frm);
 
                 if((timer + COMPREFACE_INTERVAL) < System.currentTimeMillis()){
@@ -220,7 +246,6 @@ public class Main implements Runnable{
                 findContours(thresh, cnts, new Mat(), RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
                 if(cnts.size() > 0){
-                    //евент "замечено движение"
                     for(int i=0; i < cnts.size(); i++) {
                         if(contourArea(cnts.get(i)) < 2500) {
                             continue;
@@ -228,17 +253,30 @@ public class Main implements Runnable{
                         Rect r = boundingRect(cnts.get(i));
                         rectangle(frame, r, new Scalar(0, 255, 0, 2));
 
-
-
-
-                        if (boolWorkEventMaker) {
-                            //указываем время создания события
-                            setEventTimeCreate(System.currentTimeMillis());
-                            //запускаем механизм генерации файлов (10 фото с промежутком 0,5 с и видео 10 сек) события
-                            new EventMaker();
+                        //
+                        //создать евент "замечено движение"
+                        //
+                        if(currentEvent == null) {
+                            lastEventStart = System.currentTimeMillis();
+                            MakeEvent(lastEventStart);
                         }
+
+//                        if (boolWorkEventMaker) {
+//                            //указываем время создания события
+//                            setEventTimeCreate(System.currentTimeMillis());
+//                            //запускаем механизм генерации файлов (10 фото с промежутком 0,5 с и видео 10 сек) события
+//                            new ThreadEventMaker().start();
+//                        }
                     }
                 }
+
+                if((recordTimer + RECORD_TIMER_INTERVAL) < System.currentTimeMillis()
+                        && isEventRecording) {
+                    recordTimer = System.currentTimeMillis();
+
+                    RecordFrameToSQL(frm);
+                }
+
                 canvas.showImage(converterToMat.convert(frame));
             }
         } catch (FrameGrabber.Exception e) {
@@ -247,6 +285,29 @@ public class Main implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Common Error");
+        }
+    }
+
+    public void MakeEvent(long lastEvenStart) throws SQLException, IOException, InstantiationException, IllegalAccessException {
+        QueryBuilder<ModelMDevent> query1 = ConnectDB.getConnector().query(ModelMDevent.class);
+        HashMap<String, Object> item1 = new HashMap<>();
+        item1.put("time", new Timestamp(lastEvenStart));
+        query1.insert(item1);
+        currentEvent = ConnectDB.getConnector().query(ModelMDevent.class).orderBy(false, "id").first();
+    }
+
+    public void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
+        //преобразуем
+        Java2DFrameConverter frameLocal = new Java2DFrameConverter();
+        BufferedImage bufferedImage = frameLocal.getBufferedImage(frame);
+        String strImageBase64 = imageToBase64(bufferedImage);
+
+        if(currentEvent != null){
+            QueryBuilder<ModelMDeventImages> query2 = ConnectDB.getConnector().query(ModelMDeventImages.class);
+            HashMap<String, Object> item2 = new HashMap<>();
+            item2.put("image", strImageBase64);
+            item2.put("MDevent_id", currentEvent.id);
+            query2.insert(item2);
         }
     }
 
