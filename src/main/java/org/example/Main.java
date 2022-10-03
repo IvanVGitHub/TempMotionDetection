@@ -13,10 +13,7 @@ import org.apache.http.util.EntityUtils;
 import org.bytedeco.javacv.*;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.opencv.opencv_core.*;
-import org.example.db.ConnectDB;
-import org.example.db.ModelMDevent;
-import org.example.db.ModelMDeventImages;
-import org.example.db.QueryDB;
+import org.example.db.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -86,7 +83,22 @@ public class Main implements Runnable{
     private static long eventTimeCreate;
 
     public static boolean isEventRecording = false;
-    public static ModelMDevent currentEvent = null;
+
+    public static long getLastEventStart() {
+        return lastEventStart;
+    }
+
+    static long lastEventStart = 0;
+
+    public static ModelNEWEvent getCurrentEvent() {
+        return currentEvent;
+    }
+
+    public static void setCurrentEvent(ModelNEWEvent currentEvent) {
+        Main.currentEvent = currentEvent;
+    }
+
+    public static ModelNEWEvent currentEvent = null;
     public static long getEventTimeCreate() {
         eventTimeCreate = System.currentTimeMillis();
         return eventTimeCreate;
@@ -110,7 +122,7 @@ public class Main implements Runnable{
 
     public static void main(String[] args) throws Exception {
         try {
-            ConnectDB.init();
+            ConnectDB.getConnector();
             SystemTray systemTray = SystemTray.getSystemTray();
             URL url = ClassLoader.getSystemResource("img/logoSmall.png");
             TrayIcon trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url));
@@ -144,7 +156,7 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
 
-            CamData current = c6;
+            CamData current = c1;
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(current.getConnectionUrl());
             streamGrabber.setFrameRate(current.framerate);
             streamGrabber.setImageWidth(current.width);
@@ -174,7 +186,7 @@ public class Main implements Runnable{
 
             long timer = System.currentTimeMillis();
             long recordTimer = System.currentTimeMillis();
-            long lastEventStart = 0;
+            lastEventStart = 0;
 
             Mat frame = new Mat();
             Mat firstFrame = new Mat();
@@ -247,7 +259,7 @@ public class Main implements Runnable{
 
                 if(cnts.size() > 0){
                     for(int i=0; i < cnts.size(); i++) {
-                        if(contourArea(cnts.get(i)) < 2500) {
+                        if(contourArea(cnts.get(i)) < 2000) {
                             continue;
                         }
                         Rect r = boundingRect(cnts.get(i));
@@ -258,7 +270,8 @@ public class Main implements Runnable{
                         //
                         if(currentEvent == null) {
                             lastEventStart = System.currentTimeMillis();
-                            MakeEvent(lastEventStart);
+                            QueryNEWEvent.MakeEvent();
+//                            MakeEvent(lastEventStart);
                         }
 
 //                        if (boolWorkEventMaker) {
@@ -274,7 +287,8 @@ public class Main implements Runnable{
                         && isEventRecording) {
                     recordTimer = System.currentTimeMillis();
 
-                    RecordFrameToSQL(frm);
+                    QueryNEWEventImages.RecordFrameToSQL(frm);
+//                    RecordFrameToSQL(frm);
                 }
 
                 canvas.showImage(converterToMat.convert(frame));
@@ -288,12 +302,12 @@ public class Main implements Runnable{
         }
     }
 
-    public void MakeEvent(long lastEvenStart) throws SQLException, IOException, InstantiationException, IllegalAccessException {
-        QueryBuilder<ModelMDevent> query1 = ConnectDB.getConnector().query(ModelMDevent.class);
+    public void MakeEvent(long lastEventStart) throws SQLException, IOException, InstantiationException, IllegalAccessException {
+        QueryBuilder<ModelNEWEvent> query1 = ConnectDB.getConnector().query(ModelNEWEvent.class);
         HashMap<String, Object> item1 = new HashMap<>();
-        item1.put("time", new Timestamp(lastEvenStart));
+        item1.put("time", new Timestamp(lastEventStart));
         query1.insert(item1);
-        currentEvent = ConnectDB.getConnector().query(ModelMDevent.class).orderBy(false, "id").first();
+        currentEvent = ConnectDB.getConnector().query(ModelNEWEvent.class).orderBy(false, "id").first();
     }
 
     public void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
@@ -303,10 +317,10 @@ public class Main implements Runnable{
         String strImageBase64 = imageToBase64(bufferedImage);
 
         if(currentEvent != null){
-            QueryBuilder<ModelMDeventImages> query2 = ConnectDB.getConnector().query(ModelMDeventImages.class);
+            QueryBuilder<ModelNEWEventImages> query2 = ConnectDB.getConnector().query(ModelNEWEventImages.class);
             HashMap<String, Object> item2 = new HashMap<>();
             item2.put("image", strImageBase64);
-            item2.put("MDevent_id", currentEvent.id);
+            item2.put("event_id", currentEvent.id);
             query2.insert(item2);
         }
     }
