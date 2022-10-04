@@ -2,7 +2,6 @@ package org.example;
 
 //import com.bedivierre.watcher.facerec.compreface.CompreFaceResult;
 import com.bedivierre.eloquent.QueryBuilder;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -22,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Base64;
 import java.util.HashMap;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
@@ -166,7 +166,7 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
 
-            setCamData(c1);
+            setCamData(c2);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
@@ -340,7 +340,7 @@ public class Main implements Runnable{
         try {
 //            File f = new File("images\\forCheck.jpg");
 //            byte[] fileContent = Files.readAllBytes(f.toPath());
-            String imgBase64 = Base64.encodeBase64String(b);
+            String imgBase64 = Base64.getEncoder().encodeToString(b);
 
             if(httpClient == null)
                 httpClient = HttpClients.createDefault();

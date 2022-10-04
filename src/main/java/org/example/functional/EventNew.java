@@ -1,14 +1,10 @@
 package org.example.functional;
 
-import org.bytedeco.javacv.Java2DFrameConverter;
-import org.example.db.QueryNEWEvent;
-import sun.misc.BASE64Encoder;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.util.Base64;
 
 public class EventNew {
     public static String imageToBase64(BufferedImage image) {
@@ -18,7 +14,8 @@ public class EventNew {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        BASE64Encoder encoder = new BASE64Encoder();
-        return encoder.encode(outputStream.toByteArray());
+        String imgBase64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
+
+        return imgBase64;
     }
 }
