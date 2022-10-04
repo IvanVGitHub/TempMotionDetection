@@ -15,8 +15,8 @@ public class EventNew {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             ImageIO.write(image, "jpeg", outputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
         BASE64Encoder encoder = new BASE64Encoder();
         return encoder.encode(outputStream.toByteArray());

@@ -31,6 +31,16 @@ import static org.example.functional.EventNew.imageToBase64;
 
 public class Main implements Runnable{
     private static Frame frm;
+
+    public static CamData getCamData() {
+        return camData;
+    }
+
+    public static void setCamData(CamData camData) {
+        Main.camData = camData;
+    }
+
+    private static CamData camData;
     public class CamData {
         public String host;
         public String path;
@@ -156,11 +166,11 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
 
-            CamData current = c1;
-            FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(current.getConnectionUrl());
-            streamGrabber.setFrameRate(current.framerate);
-            streamGrabber.setImageWidth(current.width);
-            streamGrabber.setImageHeight(current.height);
+            setCamData(c1);
+            FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
+            streamGrabber.setFrameRate(getCamData().framerate);
+            streamGrabber.setImageWidth(getCamData().width);
+            streamGrabber.setImageHeight(getCamData().height);
             streamGrabber.setOption("rtsp_transport", "tcp");
             return streamGrabber;
         }catch (Exception ex){

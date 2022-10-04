@@ -13,6 +13,7 @@ import java.util.HashMap;
 import static org.example.functional.EventNew.imageToBase64;
 
 public class QueryNEWEventImages {
+    //сохраняем в таблицу eventImages изображение в строковом формате в image и id события (event) в event_id
     public static void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
         //преобразуем кадр в строковое представление для хранения в БД
         Java2DFrameConverter frameLocal = new Java2DFrameConverter();
