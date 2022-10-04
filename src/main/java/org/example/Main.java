@@ -60,11 +60,11 @@ public class Main implements Runnable{
             this(host, path, username, password, width, height, 25);
         }
     }
-    static String address1 = "172.20.7.17";
 
-    static String address2 = "172.20.7.36";
-    static String address3 = "172.20.7.68";
-    static String address4 = "172.20.13.10";
+    static String address1 = "172.20.13.10";
+    static String address2 = "172.20.7.17";
+    static String address3 = "172.20.7.36";
+    static String address4 = "172.20.7.68";
     static String address5 = "172.20.7.2";
     static String address6 = "172.20.7.71";
     static String user = "admin";
@@ -120,7 +120,7 @@ public class Main implements Runnable{
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         try {
             ConnectDB.getConnector();
             SystemTray systemTray = SystemTray.getSystemTray();
@@ -148,11 +148,11 @@ public class Main implements Runnable{
     FrameGrabber getGrabber(){
         try {
             //4 сыра
-            CamData c1 = new CamData(address4, "/", user, pwd2);
+            CamData c1 = new CamData(address1, "/", user, pwd2);
 
-            CamData c2 = new CamData(address1, "/Streaming/Channels/101", user, pwd1, 1280, 800);
-            CamData c3 = new CamData(address2, "/Streaming/Channels/101", user, pwd1);
-            CamData c4 = new CamData(address3, "/Streaming/Channels/101", user, pwd1);
+            CamData c2 = new CamData(address2, "/Streaming/Channels/101", user, pwd1, 1280, 800);
+            CamData c3 = new CamData(address3, "/Streaming/Channels/101", user, pwd1);
+            CamData c4 = new CamData(address4, "/Streaming/Channels/101", user, pwd1);
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
 
