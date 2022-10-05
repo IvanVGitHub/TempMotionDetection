@@ -47,11 +47,13 @@ public class Main implements Runnable{
         public String username;
         public String password;
         public int width, height, framerate;
+        public String cameraName;
+
         public String getConnectionUrl(){
             return "rtsp://" + username + ":"+password + "@" + host + path;
         }
 
-        public CamData(String host, String path, String username, String password, int width, int height, int framerate){
+        public CamData(String host, String path, String username, String password, int width, int height, int framerate, String cameraName){
             this.host = host;
             this.path = path;
             this.username = username;
@@ -59,18 +61,25 @@ public class Main implements Runnable{
             this.width = width;
             this.height = height;
             this.framerate = framerate;
+            this.cameraName = cameraName;
         }
-        public CamData(String host, String path, String username, String password){
-            this(host, path, username, password, 1920, 1080, 25);
+        public CamData(String host, String path, String username, String password, String cameraName){
+            this(host, path, username, password, 1920, 1080, 25, cameraName);
         }
-        public CamData(String host, String path, String username, String password, int framerate){
-            this(host, path, username, password, 1920, 1080, framerate);
+        public CamData(String host, String path, String username, String password, int framerate, String cameraName){
+            this(host, path, username, password, 1920, 1080, framerate, cameraName);
         }
-        public CamData(String host, String path, String username, String password, int width, int height){
-            this(host, path, username, password, width, height, 25);
+        public CamData(String host, String path, String username, String password, int width, int height, String cameraName){
+            this(host, path, username, password, width, height, 25, cameraName);
         }
     }
 
+    String cName1 = "в кафе";
+    String cName2 = "вход Сампо";
+    String cName3 = "!не запускается!";
+    String cName4 = "!не запускается!";
+    String cName5 = "вход в бар (размазано)";
+    String cName6 = "лестница";
     static String address1 = "172.20.13.10";
     static String address2 = "172.20.7.17";
     static String address3 = "172.20.7.36";
@@ -158,15 +167,15 @@ public class Main implements Runnable{
     FrameGrabber getGrabber(){
         try {
             //4 сыра
-            CamData c1 = new CamData(address1, "/", user, pwd2);
+            CamData c1 = new CamData(address1, "/", user, pwd2, cName1); //в кафе
 
-            CamData c2 = new CamData(address2, "/Streaming/Channels/101", user, pwd1, 1280, 800);
-            CamData c3 = new CamData(address3, "/Streaming/Channels/101", user, pwd1);
-            CamData c4 = new CamData(address4, "/Streaming/Channels/101", user, pwd1);
-            CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1);
-            CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1);
+            CamData c2 = new CamData(address2, "/Streaming/Channels/101", user, pwd1, 1280, 800, cName2); //вход Сампо
+            CamData c3 = new CamData(address3, "/Streaming/Channels/101", user, pwd1, cName3); //!не запускается!
+            CamData c4 = new CamData(address4, "/Streaming/Channels/101", user, pwd1, cName4); //!не запускается!
+            CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1, cName5); //вход в бар (размазано)
+            CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1, cName6); //лестница
 
-            setCamData(c2);
+            setCamData(c6);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);

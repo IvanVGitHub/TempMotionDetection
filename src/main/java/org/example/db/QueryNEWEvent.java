@@ -14,7 +14,7 @@ public class QueryNEWEvent {
         QueryBuilder<ModelNEWEvent> query1 = ConnectDB.getConnector().query(ModelNEWEvent.class);
         HashMap<String, Object> item1 = new HashMap<>();
         item1.put("time", new Timestamp(Main.getLastEventStart()));
-        item1.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().host));
+        item1.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
         query1.insert(item1);
         Main.setCurrentEvent(ConnectDB.getConnector().query(ModelNEWEvent.class).orderBy(false, "id").first());
     }
