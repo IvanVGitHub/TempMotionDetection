@@ -175,7 +175,7 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1, cName5); //вход в бар (размазано)
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1, cName6); //лестница
 
-            setCamData(c2);
+            setCamData(c6);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
