@@ -96,8 +96,8 @@ public class Main implements Runnable{
     final int INTERVAL = 40;///you may use interval
 
     final int COMPREFACE_INTERVAL = 200;///you may use interval
-    final int RECORD_TIMER_INTERVAL = 500;///you may use interval
-    final int RECORD_TIME = 5000;///you may use interval
+    final int RECORD_TIMER_INTERVAL = 300;///интервал между сохранением изображения в БД
+    final int RECORD_TIME = 5000;///в течении этого времени будут проходить операции сохранения изображений
     public static boolean boolWorkEventMaker = true;
     private static long eventTimeCreate;
 
@@ -175,7 +175,7 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1, cName5); //вход в бар (размазано)
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1, cName6); //лестница
 
-            setCamData(c6);
+            setCamData(c2);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
@@ -220,33 +220,7 @@ public class Main implements Runnable{
             //convert to grayscale and set the first frame
             cvtColor(frame, firstFrame, COLOR_BGR2GRAY);
             GaussianBlur(firstFrame, firstFrame, new Size(21, 21), 0);
-//
-//
-//
-//            FFmpegFrameRecorder recorder = new FFmpegFrameRecorder(
-//                    "C:\\Users\\Иван\\IdeaProjects\\TempMotionDetection\\video.avi",
-//                    frm.imageWidth,
-//                    frm.imageHeight,
-//                    0
-//            );
-//            recorder.setFrameRate(25);
-//            recorder.setVideoCodec(13);
-//            recorder.setFormat("avi");
-//            double quality = 1;
-//            recorder.setVideoBitrate((int) (quality * 1024 * 1024));
-//
-//            recorder.start();
-//
-//            while (canvas.isVisible() && (frm = streamGrabber.grab()) != null) {
-//                canvas.showImage(frm);
-//                recorder.record(frm);
-//            }
-//
-//            recorder.stop();
-//            canvas.dispose();
-//
-//
-//
+
             System.out.println("Start cycle");
 
 

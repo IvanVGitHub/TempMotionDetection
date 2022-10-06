@@ -7,15 +7,20 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class QueryNEWEvent {
     //сохраняем в таблицу event время фиксирования события (event) в time и id камеры в camera_id
     public static void MakeEvent() throws SQLException, IOException, InstantiationException, IllegalAccessException {
+        UUID uuid = UUID.randomUUID();
+        String stringUUID = uuid.toString();
+
         QueryBuilder<ModelNEWEvent> query1 = ConnectDB.getConnector().query(ModelNEWEvent.class);
-        HashMap<String, Object> item1 = new HashMap<>();
-        item1.put("time", new Timestamp(Main.getLastEventStart()));
-        item1.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
-        query1.insert(item1);
+        HashMap<String, Object> item = new HashMap<>();
+        item.put("uuid", stringUUID);
+        item.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
+        item.put("time", new Timestamp(Main.getLastEventStart()));
+        query1.insert(item);
         Main.setCurrentEvent(ConnectDB.getConnector().query(ModelNEWEvent.class).orderBy(false, "id").first());
     }
 }
