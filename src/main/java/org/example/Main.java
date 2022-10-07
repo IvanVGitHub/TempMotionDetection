@@ -1,7 +1,6 @@
 package org.example;
 
 //import com.bedivierre.watcher.facerec.compreface.CompreFaceResult;
-import com.bedivierre.eloquent.QueryBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -15,19 +14,12 @@ import org.bytedeco.opencv.opencv_core.*;
 import org.example.db.*;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Base64;
-import java.util.HashMap;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
-import static org.bytedeco.opencv.global.opencv_imgcodecs.imencode;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
-import static org.example.functional.EventNew.imageToBase64;
 
 public class Main implements Runnable{
     private static Frame frm;
@@ -109,15 +101,15 @@ public class Main implements Runnable{
 
     static long lastEventStart = 0;
 
-    public static ModelNEWEvent getCurrentEvent() {
+    public static ModelEvent getCurrentEvent() {
         return currentEvent;
     }
 
-    public static void setCurrentEvent(ModelNEWEvent currentEvent) {
+    public static void setCurrentEvent(ModelEvent currentEvent) {
         Main.currentEvent = currentEvent;
     }
 
-    public static ModelNEWEvent currentEvent = null;
+    public static ModelEvent currentEvent = null;
     public static long getEventTimeCreate() {
         eventTimeCreate = System.currentTimeMillis();
         return eventTimeCreate;
@@ -175,7 +167,7 @@ public class Main implements Runnable{
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1, cName5); //вход в бар (размазано)
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1, cName6); //лестница
 
-            setCamData(c6);
+            setCamData(c2);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
@@ -240,15 +232,22 @@ public class Main implements Runnable{
 
                     //compute difference between first frame and current frame
                     absdiff(firstFrame, gray, frameDelta);
+                    //очистка памяти
+                    firstFrame.release();
                     firstFrame = gray.clone();
+                    //очистка памяти
+                    gray.release();
 
                     threshold(frameDelta, thresh, 25, 255, THRESH_BINARY);
+                    //очистка памяти
+                    frameDelta.release();
 
                     dilate(thresh, thresh, new Mat());
                 }
 
                 cnts.clear();
                 findContours(thresh, cnts, new Mat(), RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+                //thresh.release();
 
                 if(cnts.size() > 0){
                     for(int i=0; i < cnts.size(); i++) {
@@ -263,28 +262,28 @@ public class Main implements Runnable{
                         //
                         if(currentEvent == null) {
                             lastEventStart = System.currentTimeMillis();
-                            QueryNEWEvent.MakeEvent();
-//                            MakeEvent(lastEventStart);
-                        }
+//                            QueryEvent queryEvent = new QueryEvent();
+//                            queryEvent.MakeEvent();
 
-//                        if (boolWorkEventMaker) {
-//                            //указываем время создания события
-//                            setEventTimeCreate(System.currentTimeMillis());
-//                            //запускаем механизм генерации файлов (10 фото с промежутком 0,5 с и видео 10 сек) события
-//                            new ThreadEventMaker().start();
-//                        }
+//                            Thread threadMakeEvent = new Thread(queryEvent.MakeEvent());
+//                            threadMakeEvent.start();
+                        }
                     }
                 }
 
                 if((recordTimer + RECORD_TIMER_INTERVAL) < System.currentTimeMillis()
                         && isEventRecording) {
                     recordTimer = System.currentTimeMillis();
+//                    QueryEventImages queryEventImages = new QueryEventImages();
+//                    queryEventImages.RecordFrameToSQL(frm);
 
-                    QueryNEWEventImages.RecordFrameToSQL(frm);
-//                    RecordFrameToSQL(frm);
+//                            Thread threadRecordFrameToSQL = new Thread(queryEventImages.RecordFrameToSQL(frm));
+//                            threadRecordFrameToSQL.start();
                 }
 
                 canvas.showImage(converterToMat.convert(frame));
+                //очистка памяти
+                frame.release();
             }
         } catch (FrameGrabber.Exception e) {
             e.printStackTrace();
@@ -292,29 +291,6 @@ public class Main implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Common Error");
-        }
-    }
-
-    public void MakeEvent(long lastEventStart) throws SQLException, IOException, InstantiationException, IllegalAccessException {
-        QueryBuilder<ModelNEWEvent> query1 = ConnectDB.getConnector().query(ModelNEWEvent.class);
-        HashMap<String, Object> item1 = new HashMap<>();
-        item1.put("time", new Timestamp(lastEventStart));
-        query1.insert(item1);
-        currentEvent = ConnectDB.getConnector().query(ModelNEWEvent.class).orderBy(false, "id").first();
-    }
-
-    public void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
-        //преобразуем
-        Java2DFrameConverter frameLocal = new Java2DFrameConverter();
-        BufferedImage bufferedImage = frameLocal.getBufferedImage(frame);
-        String strImageBase64 = imageToBase64(bufferedImage);
-
-        if(currentEvent != null){
-            QueryBuilder<ModelNEWEventImages> query2 = ConnectDB.getConnector().query(ModelNEWEventImages.class);
-            HashMap<String, Object> item2 = new HashMap<>();
-            item2.put("image", strImageBase64);
-            item2.put("event_id", currentEvent.id);
-            query2.insert(item2);
         }
     }
 

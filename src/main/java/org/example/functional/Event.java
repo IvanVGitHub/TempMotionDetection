@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 
-public class EventNew {
+public class Event {
     public static String imageToBase64(BufferedImage image) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {

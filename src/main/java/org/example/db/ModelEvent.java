@@ -3,7 +3,7 @@ package org.example.db;
 import com.bedivierre.eloquent.model.DBModel;
 import java.sql.Timestamp;
 
-public class ModelNEWEvent extends DBModel {
+public class ModelEvent extends DBModel {
     public int id;
     public String uuid;
     public String camera_id;
@@ -13,9 +13,9 @@ public class ModelNEWEvent extends DBModel {
 
     @Override
     public String getTable() {
-        return "NEWevent";
+        return "event";
     }
 
-    public ModelNEWEvent() {
+    public ModelEvent() {
     }
 }
