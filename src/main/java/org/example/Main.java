@@ -15,7 +15,9 @@ import org.example.db.*;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.Base64;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
@@ -262,11 +264,23 @@ public class Main implements Runnable{
                         //
                         if(currentEvent == null) {
                             lastEventStart = System.currentTimeMillis();
-//                            QueryEvent queryEvent = new QueryEvent();
-//                            queryEvent.MakeEvent();
+                            QueryEvent.MakeEvent();
 
-//                            Thread threadMakeEvent = new Thread(queryEvent.MakeEvent());
-//                            threadMakeEvent.start();
+/*                            Runnable task = () -> {
+                                try {
+                                    QueryEvent.MakeEvent();
+                                } catch (SQLException e) {
+                                    throw new RuntimeException(e);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                } catch (InstantiationException e) {
+                                    throw new RuntimeException(e);
+                                } catch (IllegalAccessException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            };
+                            Thread threadMakeEvent = new Thread(task);
+                            threadMakeEvent.start();*/
                         }
                     }
                 }
@@ -274,11 +288,26 @@ public class Main implements Runnable{
                 if((recordTimer + RECORD_TIMER_INTERVAL) < System.currentTimeMillis()
                         && isEventRecording) {
                     recordTimer = System.currentTimeMillis();
-//                    QueryEventImages queryEventImages = new QueryEventImages();
-//                    queryEventImages.RecordFrameToSQL(frm);
+                    QueryEventImages.RecordFrameToSQL(frm);
 
-//                            Thread threadRecordFrameToSQL = new Thread(queryEventImages.RecordFrameToSQL(frm));
-//                            threadRecordFrameToSQL.start();
+/*                    System.out.println("Recording frame...");
+                    Runnable task = () -> {
+                        try {
+                            QueryEventImages.RecordFrameToSQL(frm);
+                            System.out.println("Frame recorded");
+
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } catch (InstantiationException e) {
+                            throw new RuntimeException(e);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    };
+                    Thread threadRecordFrameToSQL = new Thread(task);
+                    threadRecordFrameToSQL.start();*/
                 }
 
                 canvas.showImage(converterToMat.convert(frame));

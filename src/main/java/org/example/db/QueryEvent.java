@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class QueryEvent {
     //сохраняем в таблицу event время фиксирования события (event) в time и id камеры в camera_id
-    public void MakeEvent() throws SQLException, IOException, InstantiationException, IllegalAccessException {
+    public static void MakeEvent() throws SQLException, IOException, InstantiationException, IllegalAccessException {
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
 

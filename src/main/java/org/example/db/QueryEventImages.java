@@ -15,7 +15,7 @@ import static org.example.functional.Event.imageToBase64;
 
 public class QueryEventImages {
     //сохраняем в таблицу eventImages изображение в строковом формате в image и id события (event) в event_id
-    public void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
+    public static void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
 
