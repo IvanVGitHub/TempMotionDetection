@@ -74,13 +74,15 @@ public class Main implements Runnable{
     String cName4 = "!не запускается!";
     String cName5 = "вход в бар (размазано)";
     String cName6 = "лестница";
+    String cName7 = "холодильник";
     static String address1 = "172.20.13.10";
     static String address2 = "172.20.7.17";
     static String address3 = "172.20.7.36";
     static String address4 = "172.20.7.68";
     static String address5 = "172.20.7.2";
     static String address6 = "172.20.7.71";
-    static String user = "admin";
+    static String address7 = "172.20.7.72";
+    static String user1 = "admin";
     static String user2 = "root";
     static String pwd1 = "asDtin38";
     static String pwd2 = "WRPas7dZ5!";
@@ -96,6 +98,7 @@ public class Main implements Runnable{
     private static long eventTimeCreate;
 
     public static boolean isEventRecording = false;
+    QueryEvent currEvent = null;
 
     public static long getLastEventStart() {
         return lastEventStart;
@@ -161,13 +164,14 @@ public class Main implements Runnable{
     FrameGrabber getGrabber(){
         try {
             //4 сыра
-            CamData c1 = new CamData(address1, "/", user, pwd2, cName1); //в кафе
+            CamData c1 = new CamData(address1, "/", user1, pwd2, cName1); //в кафе
 
-            CamData c2 = new CamData(address2, "/Streaming/Channels/101", user, pwd1, 1280, 800, cName2); //вход Сампо
-            CamData c3 = new CamData(address3, "/Streaming/Channels/101", user, pwd1, cName3); //!не запускается!
-            CamData c4 = new CamData(address4, "/Streaming/Channels/101", user, pwd1, cName4); //!не запускается!
-            CamData c5 = new CamData(address5, "/axis-media/media.amp", user, pwd1, cName5); //вход в бар (размазано)
-            CamData c6 = new CamData(address6, "/Streaming/Channels/101", user, pwd1, cName6); //лестница
+            CamData c2 = new CamData(address2, "/Streaming/Channels/101", user1, pwd1, 1280, 800, cName2); //вход Сампо
+            CamData c3 = new CamData(address3, "/Streaming/Channels/101", user1, pwd1, cName3); //!не запускается!
+            CamData c4 = new CamData(address4, "/Streaming/Channels/101", user1, pwd1, cName4); //!не запускается!
+            CamData c5 = new CamData(address5, "/axis-media/media.amp", user1, pwd1, cName5); //вход в бар (размазано)
+            CamData c6 = new CamData(address6, "/Streaming/Channels/101", user1, pwd1, cName6); //лестница
+            CamData c7 = new CamData(address7, "/Streaming/Channels/101", user1, pwd2, cName7); //холодильник
 
             setCamData(c2);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
@@ -221,8 +225,16 @@ public class Main implements Runnable{
             while(true) {
                 frm = streamGrabber.grabImage();
                 isEventRecording = (lastEventStart + RECORD_TIME) > System.currentTimeMillis();
+
                 if(currentEvent != null && !isEventRecording)
                     currentEvent = null;
+//                if(currEvent != null && currEvent.images.size() > 9){
+//                    currEvent.saveImages();
+//                }
+//                if(currEvent != null && !isEventRecording) {
+//                    currEvent.saveImages();
+//                    currEvent = null;
+//                }
 
                 ///// ? 1.2/2
                 frame = converterToMat.convert(frm);
@@ -263,24 +275,12 @@ public class Main implements Runnable{
                         //создать евент "замечено движение"
                         //
                         if(currentEvent == null) {
+//                        if(currEvent == null) {
                             lastEventStart = System.currentTimeMillis();
                             QueryEvent.MakeEvent();
-
-/*                            Runnable task = () -> {
-                                try {
-                                    QueryEvent.MakeEvent();
-                                } catch (SQLException e) {
-                                    throw new RuntimeException(e);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                } catch (InstantiationException e) {
-                                    throw new RuntimeException(e);
-                                } catch (IllegalAccessException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            };
-                            Thread threadMakeEvent = new Thread(task);
-                            threadMakeEvent.start();*/
+//                            currEvent = QueryEvent.MakeEvent();
+//                            if(!isEventRecording)
+//                                currEvent.addFrameToEvent(frm);
                         }
                     }
                 }
@@ -288,26 +288,9 @@ public class Main implements Runnable{
                 if((recordTimer + RECORD_TIMER_INTERVAL) < System.currentTimeMillis()
                         && isEventRecording) {
                     recordTimer = System.currentTimeMillis();
+//                    if(currEvent != null)
+//                        currEvent.addFrameToEvent(frm);
                     QueryEventImages.RecordFrameToSQL(frm);
-
-/*                    System.out.println("Recording frame...");
-                    Runnable task = () -> {
-                        try {
-                            QueryEventImages.RecordFrameToSQL(frm);
-                            System.out.println("Frame recorded");
-
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (InstantiationException e) {
-                            throw new RuntimeException(e);
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
-                        }
-                    };
-                    Thread threadRecordFrameToSQL = new Thread(task);
-                    threadRecordFrameToSQL.start();*/
                 }
 
                 canvas.showImage(converterToMat.convert(frame));
