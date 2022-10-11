@@ -23,7 +23,8 @@ import java.util.Base64;
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
-public class Main implements Runnable{
+public class Main implements Runnable {
+    static String camera = "";
     private static Frame frm;
 
     public static CamData getCamData() {
@@ -136,8 +137,24 @@ public class Main implements Runnable{
         canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
     }
 
+    private static String getCameraFromArguments(String[] args){
+        String result = "";
+
+        for(int i = 0; i < args.length; i++){
+            if(!args[i].equals("-camera"))
+                continue;
+            if(args.length==i + 1)
+                return result;
+            result = args[i+1];
+            return result;
+        }
+
+        return result;
+    }
     public static void main(String[] args) {
         try {
+            camera = getCameraFromArguments(args);
+
             ConnectDB.getConnector();
             SystemTray systemTray = SystemTray.getSystemTray();
             URL url = ClassLoader.getSystemResource("img/logoSmall.png");
@@ -173,7 +190,34 @@ public class Main implements Runnable{
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user1, pwd1, cName6); //лестница
             CamData c7 = new CamData(address7, "/Streaming/Channels/101", user1, pwd2, cName7); //холодильник
 
-            setCamData(c2);
+            CamData cName;
+            switch (camera) {
+                case  ("c1"):
+                    cName = c1;
+                    break;
+                case ("c2"):
+                    cName = c2;
+                    break;
+                case ("c3"):
+                    cName = c3;
+                    break;
+                case ("c4"):
+                    cName = c4;
+                    break;
+                case ("c5"):
+                    cName = c5;
+                    break;
+                case ("c6"):
+                    cName = c6;
+                    break;
+                case ("c7"):
+                    cName = c7;
+                    break;
+                default:
+                    cName = c1;
+                    break;
+            }
+            setCamData(cName);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
@@ -228,13 +272,13 @@ public class Main implements Runnable{
 
                 if(currentEvent != null && !isEventRecording)
                     currentEvent = null;
-//                if(currEvent != null && currEvent.images.size() > 9){
-//                    currEvent.saveImages();
-//                }
-//                if(currEvent != null && !isEventRecording) {
-//                    currEvent.saveImages();
-//                    currEvent = null;
-//                }
+/*                if(currEvent != null && currEvent.images.size() > 9){
+                    currEvent.saveImages();
+                }
+                if(currEvent != null && !isEventRecording) {
+                    currEvent.saveImages();
+                    currEvent = null;
+                }*/
 
                 ///// ? 1.2/2
                 frame = converterToMat.convert(frm);
