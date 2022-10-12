@@ -28,12 +28,12 @@ public class QueryEvent {
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
 
-        QueryBuilder<ModelEvent> query1 = ConnectDB.getConnector().query(ModelEvent.class);
+        QueryBuilder<ModelEvent> query = ConnectDB.getConnector().query(ModelEvent.class);
         HashMap<String, Object> item = new HashMap<>();
         item.put("uuid", stringUUID);
         item.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
         item.put("time", new Timestamp(Main.getLastEventStart()));
-        query1.insert(item);
+        query.insert(item);
         QueryEvent ev = new QueryEvent();
         ev.model = ConnectDB.getConnector().query(ModelEvent.class).orderBy(false, "id").first();
         Main.setCurrentEvent(ev.model);

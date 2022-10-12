@@ -131,17 +131,29 @@ public class Main implements Runnable {
     }
 
     CanvasFrame canvas;
+    static boolean useCanvas = true;
+    static Main gs;
 
-    public Main() {
-        canvas = new CanvasFrame("Web Cam");
-        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+    boolean interruptThread = false;
+    String currentCamera = "";
+    boolean nocanvas = true;
+
+    public Main(boolean nocanvas) {
+        this.nocanvas = nocanvas;
+        if(useCanvas && !nocanvas) {
+            canvas = new CanvasFrame("Web Cam");
+            canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+        }
     }
 
-    private static String getCameraFromArguments(String[] args){
+    private static String getArgumentValue(String[] args, String argument){
+        return getArgumentValue(args, argument, "");
+    }
+    private static String getArgumentValue(String[] args, String argument, String defaultValue){
         String result = "";
 
         for(int i = 0; i < args.length; i++){
-            if(!args[i].equals("-camera"))
+            if(!args[i].equals("-" + argument))
                 continue;
             if(args.length==i + 1)
                 return result;
@@ -149,36 +161,82 @@ public class Main implements Runnable {
             return result;
         }
 
-        return result;
+        return defaultValue;
+    }
+    private static boolean hasKey(String[] args, String argument){
+        String result = "";
+
+        for(int i = 0; i < args.length; i++){
+            if(args[i].equals("-" + argument))
+                return true;
+        }
+        return false;
     }
     public static void main(String[] args) {
         try {
-            camera = getCameraFromArguments(args);
+
+            useCanvas = !hasKey(args, "nocanvas");
+            boolean useTray = !hasKey(args, "notray");
 
             ConnectDB.getConnector();
-            SystemTray systemTray = SystemTray.getSystemTray();
-            URL url = ClassLoader.getSystemResource("img/logoSmall.png");
-            TrayIcon trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url));
-            trayIcon.setImageAutoSize(true);
-            try {
-                systemTray.add(trayIcon);
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            if(useTray) {
+                SystemTray systemTray = SystemTray.getSystemTray();
+                URL url = ClassLoader.getSystemResource("img/logoSmall.png");
+                TrayIcon trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url));
+                trayIcon.setImageAutoSize(true);
+                try {
+                    systemTray.add(trayIcon);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                QueryDB.testDB(trayIcon);
             }
-            QueryDB.testDB(trayIcon);
 
 
 
-            Main gs = new Main();
-            Thread th = new Thread(gs);
-            th.start();
+            String camera1 = getArgumentValue(args, "camera1");
+            String camera2 = getArgumentValue(args, "camera2");
+            String camera3 = getArgumentValue(args, "camera3");
+            boolean nocanvas = false;
+
+            if(!camera1.equals("")) {
+                Main gs = new Main(nocanvas);
+                gs.currentCamera = camera1;
+                if(!nocanvas)
+                    nocanvas = false;
+                Thread th = new Thread(gs);
+                th.start();
+            }
+            if(!camera2.equals("")) {
+                Main gs = new Main(nocanvas);
+                gs.currentCamera = camera2;
+                if(!nocanvas)
+                    nocanvas = true;
+                Thread th = new Thread(gs);
+                th.start();
+            }
+            if(!camera3.equals("")) {
+                Main gs = new Main(nocanvas);
+                gs.currentCamera = camera3;
+                if(!nocanvas)
+                    nocanvas = true;
+                Thread th = new Thread(gs);
+                th.start();
+            }
+
+
+
         }
         catch (Exception e){
             System.err.println("Error: " + e.getMessage());
         }
     }
 
-    FrameGrabber getGrabber(){
+    public static void procesConsole(){
+
+    }
+
+    FrameGrabber getGrabber(String camera){
         try {
             //4 сыра
             CamData c1 = new CamData(address1, "/", user1, pwd2, cName1); //в кафе
@@ -189,7 +247,6 @@ public class Main implements Runnable {
             CamData c5 = new CamData(address5, "/axis-media/media.amp", user1, pwd1, cName5); //вход в бар (размазано)
             CamData c6 = new CamData(address6, "/Streaming/Channels/101", user1, pwd1, cName6); //лестница
             CamData c7 = new CamData(address7, "/Streaming/Channels/101", user1, pwd2, cName7); //холодильник
-
             CamData cName;
             switch (camera) {
                 case  ("c1"):
@@ -214,10 +271,11 @@ public class Main implements Runnable {
                     cName = c7;
                     break;
                 default:
-                    cName = c1;
+                    cName = c2;//по-умолчанию
                     break;
             }
             setCamData(cName);
+            System.out.println("Run camera: " + cName.cameraName);
             FFmpegFrameGrabber streamGrabber = new FFmpegFrameGrabber(getCamData().getConnectionUrl());
             streamGrabber.setFrameRate(getCamData().framerate);
             streamGrabber.setImageWidth(getCamData().width);
@@ -232,7 +290,7 @@ public class Main implements Runnable {
 
     public void run(){
         try {
-            FFmpegFrameGrabber streamGrabber = (FFmpegFrameGrabber) getGrabber();
+            FFmpegFrameGrabber streamGrabber = (FFmpegFrameGrabber) getGrabber(currentCamera);
             OpenCVFrameConverter.ToMat converterToMat = new OpenCVFrameConverter.ToMat();
 
             new File("images").mkdir();
@@ -266,7 +324,7 @@ public class Main implements Runnable {
             System.out.println("Start cycle");
 
 
-            while(true) {
+            while(!interruptThread) {
                 frm = streamGrabber.grabImage();
                 isEventRecording = (lastEventStart + RECORD_TIME) > System.currentTimeMillis();
 
@@ -337,7 +395,8 @@ public class Main implements Runnable {
                     QueryEventImages.RecordFrameToSQL(frm);
                 }
 
-                canvas.showImage(converterToMat.convert(frame));
+                if(useCanvas && !this.nocanvas && canvas != null)
+                    this.canvas.showImage(converterToMat.convert(frame));
                 //очистка памяти
                 frame.release();
             }
