@@ -19,11 +19,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.Scanner;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
 
 public class Main implements Runnable {
+    // Создание объекта Scanner
     static String camera = "";
     private static Frame frm;
 
@@ -69,26 +71,26 @@ public class Main implements Runnable {
         }
     }
 
-    String cName1 = "в кафе";
-    String cName2 = "вход Сампо";
-    String cName3 = "!не запускается!";
-    String cName4 = "!не запускается!";
-    String cName5 = "вход в бар (размазано)";
-    String cName6 = "лестница";
-    String cName7 = "холодильник";
-    static String address1 = "172.20.13.10";
-    static String address2 = "172.20.7.17";
-    static String address3 = "172.20.7.36";
-    static String address4 = "172.20.7.68";
-    static String address5 = "172.20.7.2";
-    static String address6 = "172.20.7.71";
-    static String address7 = "172.20.7.72";
-    static String user1 = "admin";
-    static String user2 = "root";
-    static String pwd1 = "asDtin38";
-    static String pwd2 = "WRPas7dZ5!";
-    static String compreFaceApiKeyLocal = "2e2916e6-1dea-4fec-bf78-fe725f678b89";
-    static String compreFaceApiKey = "5e8198f5-d1e1-4ba0-be24-d8b8db15b001";
+    final String cName1 = "в кафе";
+    final String cName2 = "вход Сампо";
+    final String cName3 = "!не запускается!";
+    final String cName4 = "!не запускается!";
+    final String cName5 = "вход в бар (размазано)";
+    final String cName6 = "лестница";
+    final String cName7 = "холодильник";
+    static final String address1 = "172.20.13.10";
+    static final String address2 = "172.20.7.17";
+    static final String address3 = "172.20.7.36";
+    static final String address4 = "172.20.7.68";
+    static final String address5 = "172.20.7.2";
+    static final String address6 = "172.20.7.71";
+    static final String address7 = "172.20.7.72";
+    static final String user1 = "admin";
+    static final String user2 = "root";
+    static final String pwd1 = "asDtin38";
+    static final String pwd2 = "WRPas7dZ5!";
+    static final String compreFaceApiKeyLocal = "2e2916e6-1dea-4fec-bf78-fe725f678b89";
+    static final String compreFaceApiKey = "5e8198f5-d1e1-4ba0-be24-d8b8db15b001";
 
     final int INTERVAL = 40;///you may use interval
 
@@ -135,6 +137,7 @@ public class Main implements Runnable {
     static Main gs;
 
     boolean interruptThread = false;
+    OpenCVFrameConverter.ToMat converterToMat = new OpenCVFrameConverter.ToMat();
     String currentCamera = "";
     boolean nocanvas = true;
 
@@ -174,9 +177,9 @@ public class Main implements Runnable {
     }
     public static void main(String[] args) {
         try {
-
             useCanvas = !hasKey(args, "nocanvas");
             boolean useTray = !hasKey(args, "notray");
+            boolean useConsole = !hasKey(args, "noconsole");
 
             ConnectDB.getConnector();
             if(useTray) {
@@ -191,8 +194,6 @@ public class Main implements Runnable {
                 }
                 QueryDB.testDB(trayIcon);
             }
-
-
 
             String camera1 = getArgumentValue(args, "camera1");
             String camera2 = getArgumentValue(args, "camera2");
@@ -224,15 +225,31 @@ public class Main implements Runnable {
                 th.start();
             }
 
-
-
+            if(useConsole)
+                processConsole();
         }
         catch (Exception e){
             System.err.println("Error: " + e.getMessage());
+            System.exit(0);
         }
     }
 
-    public static void procesConsole(){
+    public static void processConsole(){
+        boolean cycle = true;
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Для закрытия программы введите 'exit'");
+        while (cycle){
+            switch (scanner.nextLine()) {
+                case "exit":
+                    System.exit(0);
+                    break;
+                case "help":
+                    String help = "help - descriptions of command\n";
+                    help += "exit - exit program and close all cameras\n";
+                    System.out.println(help);
+                    break;
+            }
+        }
 
     }
 
@@ -291,7 +308,7 @@ public class Main implements Runnable {
     public void run(){
         try {
             FFmpegFrameGrabber streamGrabber = (FFmpegFrameGrabber) getGrabber(currentCamera);
-            OpenCVFrameConverter.ToMat converterToMat = new OpenCVFrameConverter.ToMat();
+
 
             new File("images").mkdir();
 
@@ -322,7 +339,6 @@ public class Main implements Runnable {
             GaussianBlur(firstFrame, firstFrame, new Size(21, 21), 0);
 
             System.out.println("Start cycle");
-
 
             while(!interruptThread) {
                 frm = streamGrabber.grabImage();
@@ -399,6 +415,8 @@ public class Main implements Runnable {
                     this.canvas.showImage(converterToMat.convert(frame));
                 //очистка памяти
                 frame.release();
+
+
             }
         } catch (FrameGrabber.Exception e) {
             e.printStackTrace();
