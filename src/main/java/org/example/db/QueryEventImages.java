@@ -15,7 +15,7 @@ import static org.example.functional.Event.imageToBase64;
 
 public class QueryEventImages {
     //сохраняем в таблицу eventImages изображение в строковом формате в image и id события (event) в event_id
-    public static void RecordFrameToSQL(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
+    public static void RecordFrameToSQL(Frame frame) {
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
 
@@ -24,15 +24,19 @@ public class QueryEventImages {
         BufferedImage bufferedImage = frameLocal.getBufferedImage(frame);
         String strImageBase64 = imageToBase64(bufferedImage);
 
+//        (new Thread(()->{
+//
+//        })).start();
         if(Main.getCurrentEvent() != null){
-            QueryBuilder<ModelEventImages> query = ConnectDB.getConnector().query(ModelEventImages.class);
-            HashMap<String, Object> item = new HashMap<>();
-            item.put("uuid", stringUUID);
-            item.put("event_id", Main.getCurrentEvent().id);
-            item.put("image", strImageBase64);
-            query.insert(item);
+            try {
+                QueryBuilder<ModelEventImages> query = ConnectDB.getConnector().query(ModelEventImages.class);
+                HashMap<String, Object> item = new HashMap<>();
+                item.put("uuid", stringUUID);
+                item.put("event_id", Main.getCurrentEvent().id);
+                item.put("image", strImageBase64);
+                query.insert(item);
+            } catch (Exception ex) {ex.printStackTrace();}
         }
-
         frame.close();
     }
 }

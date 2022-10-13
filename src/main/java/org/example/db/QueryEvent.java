@@ -21,25 +21,28 @@ public class QueryEvent {
 
 
     //сохраняем в таблицу event время фиксирования события (event) в time и id камеры в camera_id
-    public static QueryEvent MakeEvent() throws SQLException, IOException, InstantiationException, IllegalAccessException {
-//        (new Thread(()->{
-//            //Сюда многопоточность!
-//
-//        })).start();
+    public static QueryEvent MakeEvent() {
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
-
-        QueryBuilder<ModelEvent> query = ConnectDB.getConnector().query(ModelEvent.class);
-        HashMap<String, Object> item = new HashMap<>();
-        item.put("uuid", stringUUID);
-        item.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
-        item.put("time", new Timestamp(Main.getLastEventStart()));
-        query.insert(item);
         QueryEvent ev = new QueryEvent();
-        ev.model = ConnectDB.getConnector().query(ModelEvent.class).orderBy(false, "id").first();
-        Main.setCurrentEvent(ev.model);
+
+//        (new Thread(()->{
+//
+//        })).start();
+        try {
+            QueryBuilder<ModelEvent> query = ConnectDB.getConnector().query(ModelEvent.class);
+            HashMap<String, Object> item = new HashMap<>();
+            item.put("uuid", stringUUID);
+            item.put("camera_id", QueryAny.getCameraIDByName(Main.getCamData().cameraName));
+            item.put("time", new Timestamp(Main.getLastEventStart()));
+            query.insert(item);
+            ev.model = ConnectDB.getConnector().query(ModelEvent.class).orderBy(false, "id").first();
+            Main.setCurrentEvent(ev.model);
+        } catch (Exception ex) {ex.printStackTrace();}
+
         return ev;
     }
+
     public String addFrameToEvent(Frame frame) throws SQLException, IOException, InstantiationException, IllegalAccessException {
 
         if(this.model == null)
