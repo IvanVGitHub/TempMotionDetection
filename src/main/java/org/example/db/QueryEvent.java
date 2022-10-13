@@ -22,9 +22,10 @@ public class QueryEvent {
 
     //сохраняем в таблицу event время фиксирования события (event) в time и id камеры в camera_id
     public static QueryEvent MakeEvent() throws SQLException, IOException, InstantiationException, IllegalAccessException {
-        (new Thread(()->{
-            //Сюда многопоточность!
-        })).start();
+//        (new Thread(()->{
+//            //Сюда многопоточность!
+//
+//        })).start();
         UUID uuid = UUID.randomUUID();
         String stringUUID = uuid.toString();
 

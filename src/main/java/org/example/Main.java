@@ -152,6 +152,7 @@ public class Main implements Runnable {
     private static String getArgumentValue(String[] args, String argument){
         return getArgumentValue(args, argument, "");
     }
+
     private static String getArgumentValue(String[] args, String argument, String defaultValue){
         String result = "";
 
@@ -166,6 +167,7 @@ public class Main implements Runnable {
 
         return defaultValue;
     }
+
     private static boolean hasKey(String[] args, String argument){
         String result = "";
 
@@ -175,6 +177,7 @@ public class Main implements Runnable {
         }
         return false;
     }
+
     public static void main(String[] args) {
         try {
             useCanvas = !hasKey(args, "nocanvas");
@@ -234,26 +237,33 @@ public class Main implements Runnable {
         }
     }
 
-    public static void processConsole(){
+    public static void processConsole() {
         boolean cycle = true;
         Scanner scanner = new Scanner(System.in);
         System.out.println("Для закрытия программы введите 'exit'");
-        while (cycle){
-            switch (scanner.nextLine()) {
+        while (cycle) {
+            String command = scanner.nextLine();
+            switch (command) {
                 case "exit":
                     System.exit(0);
+                    break;
+                case "exitconsole":
+                    cycle = false;
+                    System.out.println("Console disabled.");
                     break;
                 case "help":
                     String help = "help - descriptions of command\n";
                     help += "exit - exit program and close all cameras\n";
+                    help += "exitconsole - disable console\n";
                     System.out.println(help);
                     break;
+                default:
+                    System.out.println("Command '" + command + "' not exists.");
             }
         }
-
     }
 
-    FrameGrabber getGrabber(String camera){
+    FrameGrabber getGrabber(String camera) {
         try {
             //4 сыра
             CamData c1 = new CamData(address1, "/", user1, pwd2, cName1); //в кафе
