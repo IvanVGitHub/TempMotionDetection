@@ -14,15 +14,18 @@ import org.bytedeco.opencv.opencv_core.*;
 import org.example.db.*;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Scanner;
 
 import static org.bytedeco.opencv.global.opencv_core.absdiff;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import static org.example.functional.Event.imageToBase64;
 
 public class Main implements Runnable {
     // Создание объекта Scanner
@@ -99,6 +102,17 @@ public class Main implements Runnable {
     final int RECORD_TIME = 5000;///в течении этого времени будут проходить операции сохранения изображений
     public static boolean boolWorkEventMaker = true;
     private static long eventTimeCreate;
+    //список кадров перед занесением их в БД
+    private static ArrayList<String> listStrImageBase64;
+    public static ArrayList<String> getListStrImageBase64() {
+        return listStrImageBase64;
+    }
+    public static void setListStrImageBase64(String listStrImageBase64) {
+        Main.listStrImageBase64.add(listStrImageBase64);
+    }
+    public static void clearListStrImageBase64() {
+        Main.listStrImageBase64.clear();
+    }
 
     public static boolean isEventRecording = false;
     QueryEvent currEvent = null;
@@ -406,6 +420,10 @@ public class Main implements Runnable {
 //                        if(currEvent == null) {
                             lastEventStart = System.currentTimeMillis();
                             QueryEvent.MakeEvent();
+//                            //тестирование записи каров "пакетом"
+//                            if (getListStrImageBase64() != null)
+//                                QueryEventImages.RecordAllFrameToSQL(getListStrImageBase64());
+
 //                            currEvent = QueryEvent.MakeEvent();
 //                            if(!isEventRecording)
 //                                currEvent.addFrameToEvent(frm);
@@ -418,7 +436,16 @@ public class Main implements Runnable {
                     recordTimer = System.currentTimeMillis();
 //                    if(currEvent != null)
 //                        currEvent.addFrameToEvent(frm);
+
+
+
                     QueryEventImages.RecordFrameToSQL(frm);
+//                    //ТЕСТ преобразуем кадр в строковое представление и обавляем в список для записи в БД "пакетом"
+//                    Java2DFrameConverter frameLocal = new Java2DFrameConverter();
+//                    BufferedImage bufferedImage = frameLocal.getBufferedImage(frm);
+//                    String strImageBase64 = imageToBase64(bufferedImage);
+//                    //добавляем кадр в список
+//                    setListStrImageBase64(strImageBase64);
                 }
 
                 if(useCanvas && !this.nocanvas && canvas != null)

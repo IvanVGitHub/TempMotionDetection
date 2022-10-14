@@ -19,7 +19,6 @@ public class QueryEvent {
     public volatile ArrayList<String> images = new ArrayList<>();
     ModelEvent model;
 
-
     //сохраняем в таблицу event время фиксирования события (event) в time и id камеры в camera_id
     public static QueryEvent MakeEvent() {
         UUID uuid = UUID.randomUUID();
